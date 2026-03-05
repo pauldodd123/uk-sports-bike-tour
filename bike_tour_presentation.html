@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UK Sports Club Bike Tour</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #1a1a1a;
+  background: #fff;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Navbar ── */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.3s ease;
+}
+.navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+.navbar-brand {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+.navbar-links {
+  display: flex;
+  gap: 32px;
+  list-style: none;
+}
+.navbar-links a {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: color 0.2s;
+}
+.navbar-links a:hover { color: #fff; }
+@media (max-width: 640px) {
+  .navbar-links { gap: 16px; }
+  .navbar-links a { font-size: 0.7rem; letter-spacing: 0.04em; }
+}
+
+/* ── Container ── */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+/* ── Hero ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: linear-gradient(160deg, #0a0a0a 0%, #1a1a1a 40%, #222 70%, #0a0a0a 100%);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 40%, rgba(230,57,70,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 60%, rgba(69,123,157,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 80%, rgba(42,157,143,0.04) 0%, transparent 50%);
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.5;
+}
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  padding: 100px 24px 80px;
+}
+.hero-label {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 24px;
+  padding: 6px 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+.hero h1 {
+  font-size: clamp(2.8rem, 7vw, 5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin-bottom: 24px;
+}
+.hero h1 span {
+  display: block;
+  background: linear-gradient(135deg, #e63946 0%, #457b9d 50%, #2a9d8f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero .subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  font-weight: 300;
+  opacity: 0.6;
+  max-width: 600px;
+  margin: 0 auto 48px;
+  line-height: 1.6;
+}
+.hero .scroll-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.3;
+  animation: pulse 2.5s ease-in-out infinite;
+  cursor: pointer;
+  text-decoration: none;
+  color: #fff;
+}
+.scroll-hint svg {
+  width: 16px;
+  height: 16px;
+  animation: bounce 2.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.6; }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+/* ── Stats Bar ── */
+.stats-bar {
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  padding: 56px 0;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.stat-box {
+  text-align: center;
+  padding: 36px 20px;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 2px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.stat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+.stat-number {
+  font-size: clamp(2.2rem, 4.5vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.stat-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #999;
+}
+@media (max-width: 640px) {
+  .stats-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Sections ── */
+.section { padding: 80px 0; }
+.section-dark { background: #1a1a1a; color: #fff; }
+.section-light { background: #fafafa; }
+.section-title {
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
+}
+.section-subtitle {
+  font-size: 1rem;
+  color: #888;
+  font-weight: 400;
+  margin-bottom: 48px;
+  max-width: 600px;
+}
+.section-dark .section-subtitle { color: rgba(255,255,255,0.4); }
+
+/* ── Map ── */
+#overview-map {
+  width: 100%;
+  height: 620px;
+  border-radius: 2px;
+  border: 1px solid #e5e5e5;
+  z-index: 1;
+}
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin-top: 20px;
+  padding: 20px 24px;
+  background: #f5f5f5;
+  border-radius: 2px;
+  border: 1px solid #eee;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #555;
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Day Cards ── */
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
+}
+@media (max-width: 480px) {
+  .days-grid { grid-template-columns: 1fr; }
+}
+
+.day-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 2px;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.day-card:hover {
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  border-color: #ddd;
+}
+.day-card.expanded {
+  grid-column: 1 / -1;
+}
+.day-card-header {
+  padding: 20px 24px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: background 0.15s;
+}
+.day-card-header:hover { background: #fafafa; }
+.day-info { flex: 1; min-width: 0; }
+.day-number {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #999;
+  margin-bottom: 4px;
+}
+.day-route {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.day-meta {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+}
+.day-meta span {
+  font-size: 0.78rem;
+  color: #999;
+  font-weight: 500;
+}
+.day-expand-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e5e5e5;
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #999;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.05em;
+}
+.day-expand-btn:hover {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #fff;
+}
+.day-card.expanded .day-expand-btn {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+/* Day card expanded body */
+.day-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.day-card.expanded .day-body {
+  max-height: 2000px;
+}
+.day-body-inner {
+  padding: 0 24px 24px;
+  border-top: 1px solid #f0f0f0;
+}
+.day-mini-map {
+  width: 100%;
+  height: 280px;
+  border-radius: 2px;
+  border: 1px solid #eee;
+  margin: 20px 0;
+  background: #f5f5f5;
+}
+.stop-list {
+  list-style: none;
+  padding: 0;
+}
+.stop-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+.stop-item:last-child { border-bottom: none; }
+.stop-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.stop-details { flex: 1; min-width: 0; }
+.stop-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.stop-address {
+  font-size: 0.75rem;
+  color: #999;
+  font-weight: 400;
+  margin-top: 1px;
+}
+.stop-category-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* ── Ferry Divider ── */
+.ferry-divider {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 48px 0;
+}
+.ferry-divider-line {
+  flex: 1;
+  height: 1px;
+  background: #ddd;
+}
+.ferry-divider-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 28px;
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 2px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ferry-icon {
+  font-size: 1.1rem;
+}
+
+/* ── Summary Section ── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-top: 48px;
+}
+.summary-card {
+  padding: 32px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+.summary-card:hover {
+  background: rgba(255,255,255,0.08);
+}
+.summary-card-number {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+.summary-card-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 12px;
+}
+.summary-card-desc {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.5;
+}
+
+/* ── Footer ── */
+.footer {
+  background: #0a0a0a;
+  color: rgba(255,255,255,0.3);
+  padding: 40px 0;
+  text-align: center;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.footer a {
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+}
+.footer a:hover { color: #fff; }
+
+/* ── Category colors ── */
+.cat-football { background: #e63946; }
+.cat-rugby-union { background: #457b9d; }
+.cat-rugby-league { background: #2a9d8f; }
+.cat-cricket { background: #e9c46a; }
+.cat-netball { background: #f4a261; }
+.cat-basketball { background: #264653; }
+
+.tag-football { background: rgba(230,57,70,0.1); color: #e63946; }
+.tag-rugby-union { background: rgba(69,123,157,0.1); color: #457b9d; }
+.tag-rugby-league { background: rgba(42,157,143,0.1); color: #2a9d8f; }
+.tag-cricket { background: rgba(233,196,106,0.15); color: #b8860b; }
+.tag-netball { background: rgba(244,162,97,0.1); color: #d4781e; }
+.tag-basketball { background: rgba(38,70,83,0.1); color: #264653; }
+
+/* ── Leaflet overrides ── */
+.leaflet-popup-content-wrapper {
+  border-radius: 2px !important;
+  font-family: 'Inter', sans-serif !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15) !important;
+}
+.leaflet-popup-content {
+  margin: 12px 16px !important;
+  font-size: 0.82rem !important;
+  line-height: 1.5 !important;
+}
+.leaflet-popup-content strong {
+  font-weight: 600;
+}
+.leaflet-control-zoom a {
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .section { padding: 56px 0; }
+  .stats-bar { padding: 40px 0; }
+  .hero-content { padding: 80px 20px 60px; }
+  .days-grid { grid-template-columns: 1fr; }
+  .day-card.expanded { grid-column: 1; }
+  #overview-map { height: 400px; }
+  .navbar-links { display: none; }
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .summary-grid { grid-template-columns: 1fr; }
+  .container { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="#" class="navbar-brand"><svg width="160" height="17" viewBox="0 0 240 26" xmlns="http://www.w3.org/2000/svg"><g fill="#fff" fill-rule="evenodd"><path d="M186.197 12.204c0 .82.367 1.447 1.104 1.879.737.433 2.082.717 4.037.854 2.1.16 3.7.632 4.797 1.418 1.098.785 1.648 1.929 1.648 3.432v.205c0 .82-.176 1.554-.525 2.203a5.89 5.89 0 0 1-1.447 1.656 6.828 6.828 0 0 1-2.245 1.041 9.634 9.634 0 0 1-2.879.359c-1.4 0-2.601-.176-3.603-.53a7.737 7.737 0 0 1-2.498-1.4 6.538 6.538 0 0 1-1.502-1.98 7.316 7.316 0 0 1-.579-2.237l2.678-.615c.121 1.298.653 2.34 1.593 3.125.941.786 2.196 1.178 3.765 1.178 1.329 0 2.396-.244 3.204-.734.808-.49 1.213-1.179 1.213-2.067 0-.956-.399-1.64-1.195-2.049-.796-.41-2.088-.672-3.874-.786-2.076-.114-3.669-.569-4.778-1.344-1.111-.773-1.666-1.9-1.666-3.38v-.206c0-.796.181-1.497.543-2.1a4.857 4.857 0 0 1 1.466-1.52 6.384 6.384 0 0 1 2.082-.921 9.062 9.062 0 0 1 2.425-.307c1.183 0 2.221.153 3.115.461a6.72 6.72 0 0 1 2.243 1.195c.605.49 1.069 1.054 1.394 1.691.326.638.538 1.275.633 1.912l-2.678.614c-.12-1.093-.586-1.946-1.394-2.561-.809-.614-1.865-.921-3.167-.921-.508 0-.997.05-1.467.153a3.76 3.76 0 0 0-1.249.461 2.37 2.37 0 0 0-.869.769 1.847 1.847 0 0 0-.326 1.07"/><polyline points="205.078 9.683 219.127 16.098 219.127 16.508 205.078 22.923 205.078 26.011 220.213 18.899 220.213 13.708 205.078 6.595 205.078 9.683"/><polyline points="224.865 9.683 238.914 16.098 238.914 16.508 224.865 22.923 224.865 26.011 240 18.899 240 13.708 224.865 6.595 224.865 9.683"/><polyline points="13.819 .867 13.819 23.543 13.384 23.543 6.071 .867 -.011 .867 -.011 24.772 3.03 24.772 3.03 2.096 3.464 2.096 10.778 24.772 16.86 24.772 16.86 .867 13.819 .867"/><path d="M27.26 16.867c.072 1.713.624 3.091 1.657 4.133.98 1.041 2.47 1.562 4.319 1.562.84 0 1.572-.091 2.196-.277a4.98 4.98 0 0 0 1.599-.764c.444-.323.804-.7 1.08-1.129.276-.428.499-.886.667-1.372l2.664.694c-.504 1.598-1.434 2.901-2.79 3.908-1.357 1.007-3.186 1.511-5.49 1.511-1.272 0-2.442-.215-3.51-.643a7.508 7.508 0 0 1-2.753-1.823 8.077 8.077 0 0 1-1.8-2.814 9.728 9.728 0 0 1-.648-3.612v-.834c0-1.203.221-2.327.665-3.369a8.472 8.472 0 0 1 1.854-2.691 8.21 8.21 0 0 1 2.79-1.771 9.308 9.308 0 0 1 3.474-.645c1.464 0 2.73.26 3.798.781a7.486 7.486 0 0 1 2.628 1.928 8.218 8.218 0 0 1 1.513 2.501c.324.903.486 1.736.486 2.501v2.223H27.26zm5.976-7.363c-.792 0-1.53.121-2.214.364a5.238 5.238 0 0 0-1.8 1.024 5.514 5.514 0 0 0-1.26 1.546c-.324.59-.534 1.233-.63 1.928h11.52a5.59 5.59 0 0 0-.558-2.015 5.182 5.182 0 0 0-1.26-1.528 5.548 5.548 0 0 0-1.764-.973 5.926 5.926 0 0 0-2.034-.346z"/><polyline points="66.009 25.133 60.802 25.133 58.632 9.058 58.198 9.058 56.028 25.133 50.821 25.133 48 7.8 50.893 7.8 53.28 23.875 53.714 23.875 55.811 7.8 61.019 7.8 63.116 23.875 63.55 23.875 65.937 7.8 68.83 7.8 66.009 25.133"/><path d="M74.264 7.674h5.596V3.239c0-.798.261-1.455.787-1.971a2.1 2.1 0 0 1 2.029-.774h7.169v2.534h-6.145c-.658 0-.987.352-.987 1.056v3.59h7.571v2.534h-7.571v14.925h-2.853V10.208h-5.596V7.674M96.255 22.598h6.363V10.208h-5.705V7.674h8.558v14.924h5.925v2.535H96.255v-2.535zM101.448 2.465c0-.681.25-1.262.75-1.743a2.325 2.325 0 0 1 1.811-.722c.707 0 1.311.241 1.811.722.5.481.75 1.062.75 1.743 0 .68-.25 1.261-.75 1.742a2.325 2.325 0 0 1-1.811.722 2.325 2.325 0 0 1-1.811-.722c-.5-.481-.75-1.062-.75-1.742z"/><path d="M118.732 16.867c.073 1.713.625 3.091 1.657 4.133.981 1.041 2.471 1.562 4.319 1.562.84 0 1.572-.091 2.196-.277a4.98 4.98 0 0 0 1.599-.764c.444-.323.804-.7 1.08-1.129.276-.428.499-.886.667-1.372l2.664.694c-.504 1.598-1.434 2.901-2.79 3.908-1.357 1.007-3.186 1.511-5.491 1.511-1.272 0-2.442-.215-3.51-.643a7.508 7.508 0 0 1-2.753-1.823 8.077 8.077 0 0 1-1.8-2.814 9.728 9.728 0 0 1-.648-3.612v-.834c0-1.203.222-2.327.666-3.369a8.472 8.472 0 0 1 1.854-2.691 8.21 8.21 0 0 1 2.79-1.771 9.308 9.308 0 0 1 3.474-.645c1.464 0 2.73.26 3.798.781a7.486 7.486 0 0 1 2.628 1.928 8.218 8.218 0 0 1 1.512 2.501c.324.903.486 1.736.486 2.501v2.223h-14.4zm5.976-7.363c-.792 0-1.53.121-2.214.364a5.238 5.238 0 0 0-1.8 1.024 5.514 5.514 0 0 0-1.26 1.546c-.324.59-.534 1.233-.63 1.928h11.52a5.59 5.59 0 0 0-.558-2.015 5.182 5.182 0 0 0-1.26-1.528 5.548 5.548 0 0 0-1.764-.973 5.926 5.926 0 0 0-2.034-.346z"/><polyline points="138.566 22.637 145.265 22.637 145.265 3.363 138.789 3.363 138.789 .867 148.169 .867 148.169 22.637 154.868 22.637 154.868 25.133 138.566 25.133 138.566 22.637"/><path d="M172.815 21.965h-.444a5.122 5.122 0 0 1-1.127 1.408 5.54 5.54 0 0 1-1.479.985 5.476 5.476 0 0 1-1.682.581 7.61 7.61 0 0 1-1.7.194c-1.233 0-2.378-.2-3.438-.599a7.392 7.392 0 0 1-2.79-1.724 7.932 7.932 0 0 1-1.886-2.799 9.605 9.605 0 0 1-.684-3.819v-.564c0-1.407.234-2.668.703-3.783a8.193 8.193 0 0 1 1.884-2.817 7.392 7.392 0 0 1 2.773-1.742 9.077 9.077 0 0 1 3.364-.598c1.257 0 2.433.263 3.53.791 1.096.528 1.94 1.344 2.532 2.446h.444V0h2.883v24.64h-2.883v-2.675zm-6.137.563c.862 0 1.663-.152 2.402-.457a5.14 5.14 0 0 0 1.941-1.303 6.04 6.04 0 0 0 1.313-2.024 6.886 6.886 0 0 0 .48-2.622v-.422a6.964 6.964 0 0 0-.48-3.01 5.977 5.977 0 0 0-1.313-1.961 5.093 5.093 0 0 0-1.959-1.32 6.183 6.183 0 0 0-2.384-.476c-.863 0-1.67.153-2.422.458a5.077 5.077 0 0 0-1.959 1.303 6.059 6.059 0 0 0-1.293 2.007 7.07 7.07 0 0 0-.462 2.569v.563c0 .986.153 1.866.462 2.64a5.95 5.95 0 0 0 1.293 1.989 5.144 5.144 0 0 0 1.941 1.267 6.344 6.344 0 0 0 2.44.339z"/></g></svg></a>
+    <ul class="navbar-links">
+      <li><a href="#stats">Stats</a></li>
+      <li><a href="#map">Map</a></li>
+      <li><a href="#itinerary">Itinerary</a></li>
+      <li><a href="#summary">Summary</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <div class="hero-label">27 Days &middot; 176 Venues &middot; 6 Sports</div>
+    <h1>UK Sports Club<br><span>Bike Tour</span></h1>
+    <p class="subtitle">A 1,878-mile cycling journey visiting every major professional sports club across Great Britain</p>
+    <a href="#stats" class="scroll-hint">
+      Explore the route
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </a>
+  </div>
+</section>
+
+<!-- Stats Bar -->
+<section class="stats-bar" id="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-number" id="stat-venues">176</div>
+        <div class="stat-label">Total Venues</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" id="stat-miles">~1,878</div>
+        <div class="stat-label">Total Miles</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number">29</div>
+        <div class="stat-label">Total Days</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Overview Map -->
+<section class="section" id="map">
+  <div class="container">
+    <h2 class="section-title">Route Overview</h2>
+    <p class="section-subtitle">All 176 venues colour-coded by sport, spanning from Plymouth to Dundee</p>
+    <div id="overview-map"></div>
+    <div class="map-legend">
+      <div class="legend-item"><div class="legend-dot cat-football"></div>Football</div>
+      <div class="legend-item"><div class="legend-dot cat-rugby-union"></div>Rugby Union</div>
+      <div class="legend-item"><div class="legend-dot cat-rugby-league"></div>Rugby League</div>
+      <div class="legend-item"><div class="legend-dot cat-cricket"></div>Cricket</div>
+      <div class="legend-item"><div class="legend-dot cat-netball"></div>Netball</div>
+      <div class="legend-item"><div class="legend-dot cat-basketball"></div>Basketball</div>
+    </div>
+  </div>
+</section>
+
+<div style="height:1px;background:#eee;"></div>
+
+<!-- Day-by-Day Itinerary -->
+<section class="section section-light" id="itinerary">
+  <div class="container">
+    <h2 class="section-title">Day-by-Day Itinerary</h2>
+    <p class="section-subtitle">Click any day card to expand the full route details and venue list</p>
+    <div class="days-grid" id="mainland-days"></div>
+
+  </div>
+</section>
+
+<!-- Summary -->
+<section class="section section-dark" id="summary">
+  <div class="container">
+    <h2 class="section-title">Tour Highlights</h2>
+    <p class="section-subtitle">Key statistics from the complete UK Sports Club Bike Tour</p>
+    <div class="summary-grid" id="summary-grid"></div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div style="margin-bottom:16px"><svg width="140" height="15" viewBox="0 0 240 26" xmlns="http://www.w3.org/2000/svg"><g fill="#fff" fill-rule="evenodd"><path d="M186.197 12.204c0 .82.367 1.447 1.104 1.879.737.433 2.082.717 4.037.854 2.1.16 3.7.632 4.797 1.418 1.098.785 1.648 1.929 1.648 3.432v.205c0 .82-.176 1.554-.525 2.203a5.89 5.89 0 0 1-1.447 1.656 6.828 6.828 0 0 1-2.245 1.041 9.634 9.634 0 0 1-2.879.359c-1.4 0-2.601-.176-3.603-.53a7.737 7.737 0 0 1-2.498-1.4 6.538 6.538 0 0 1-1.502-1.98 7.316 7.316 0 0 1-.579-2.237l2.678-.615c.121 1.298.653 2.34 1.593 3.125.941.786 2.196 1.178 3.765 1.178 1.329 0 2.396-.244 3.204-.734.808-.49 1.213-1.179 1.213-2.067 0-.956-.399-1.64-1.195-2.049-.796-.41-2.088-.672-3.874-.786-2.076-.114-3.669-.569-4.778-1.344-1.111-.773-1.666-1.9-1.666-3.38v-.206c0-.796.181-1.497.543-2.1a4.857 4.857 0 0 1 1.466-1.52 6.384 6.384 0 0 1 2.082-.921 9.062 9.062 0 0 1 2.425-.307c1.183 0 2.221.153 3.115.461a6.72 6.72 0 0 1 2.243 1.195c.605.49 1.069 1.054 1.394 1.691.326.638.538 1.275.633 1.912l-2.678.614c-.12-1.093-.586-1.946-1.394-2.561-.809-.614-1.865-.921-3.167-.921-.508 0-.997.05-1.467.153a3.76 3.76 0 0 0-1.249.461 2.37 2.37 0 0 0-.869.769 1.847 1.847 0 0 0-.326 1.07"/><polyline points="205.078 9.683 219.127 16.098 219.127 16.508 205.078 22.923 205.078 26.011 220.213 18.899 220.213 13.708 205.078 6.595 205.078 9.683"/><polyline points="224.865 9.683 238.914 16.098 238.914 16.508 224.865 22.923 224.865 26.011 240 18.899 240 13.708 224.865 6.595 224.865 9.683"/><polyline points="13.819 .867 13.819 23.543 13.384 23.543 6.071 .867 -.011 .867 -.011 24.772 3.03 24.772 3.03 2.096 3.464 2.096 10.778 24.772 16.86 24.772 16.86 .867 13.819 .867"/><path d="M27.26 16.867c.072 1.713.624 3.091 1.657 4.133.98 1.041 2.47 1.562 4.319 1.562.84 0 1.572-.091 2.196-.277a4.98 4.98 0 0 0 1.599-.764c.444-.323.804-.7 1.08-1.129.276-.428.499-.886.667-1.372l2.664.694c-.504 1.598-1.434 2.901-2.79 3.908-1.357 1.007-3.186 1.511-5.49 1.511-1.272 0-2.442-.215-3.51-.643a7.508 7.508 0 0 1-2.753-1.823 8.077 8.077 0 0 1-1.8-2.814 9.728 9.728 0 0 1-.648-3.612v-.834c0-1.203.221-2.327.665-3.369a8.472 8.472 0 0 1 1.854-2.691 8.21 8.21 0 0 1 2.79-1.771 9.308 9.308 0 0 1 3.474-.645c1.464 0 2.73.26 3.798.781a7.486 7.486 0 0 1 2.628 1.928 8.218 8.218 0 0 1 1.513 2.501c.324.903.486 1.736.486 2.501v2.223H27.26zm5.976-7.363c-.792 0-1.53.121-2.214.364a5.238 5.238 0 0 0-1.8 1.024 5.514 5.514 0 0 0-1.26 1.546c-.324.59-.534 1.233-.63 1.928h11.52a5.59 5.59 0 0 0-.558-2.015 5.182 5.182 0 0 0-1.26-1.528 5.548 5.548 0 0 0-1.764-.973 5.926 5.926 0 0 0-2.034-.346z"/><polyline points="66.009 25.133 60.802 25.133 58.632 9.058 58.198 9.058 56.028 25.133 50.821 25.133 48 7.8 50.893 7.8 53.28 23.875 53.714 23.875 55.811 7.8 61.019 7.8 63.116 23.875 63.55 23.875 65.937 7.8 68.83 7.8 66.009 25.133"/><path d="M74.264 7.674h5.596V3.239c0-.798.261-1.455.787-1.971a2.1 2.1 0 0 1 2.029-.774h7.169v2.534h-6.145c-.658 0-.987.352-.987 1.056v3.59h7.571v2.534h-7.571v14.925h-2.853V10.208h-5.596V7.674M96.255 22.598h6.363V10.208h-5.705V7.674h8.558v14.924h5.925v2.535H96.255v-2.535zM101.448 2.465c0-.681.25-1.262.75-1.743a2.325 2.325 0 0 1 1.811-.722c.707 0 1.311.241 1.811.722.5.481.75 1.062.75 1.743 0 .68-.25 1.261-.75 1.742a2.325 2.325 0 0 1-1.811.722 2.325 2.325 0 0 1-1.811-.722c-.5-.481-.75-1.062-.75-1.742z"/><path d="M118.732 16.867c.073 1.713.625 3.091 1.657 4.133.981 1.041 2.471 1.562 4.319 1.562.84 0 1.572-.091 2.196-.277a4.98 4.98 0 0 0 1.599-.764c.444-.323.804-.7 1.08-1.129.276-.428.499-.886.667-1.372l2.664.694c-.504 1.598-1.434 2.901-2.79 3.908-1.357 1.007-3.186 1.511-5.491 1.511-1.272 0-2.442-.215-3.51-.643a7.508 7.508 0 0 1-2.753-1.823 8.077 8.077 0 0 1-1.8-2.814 9.728 9.728 0 0 1-.648-3.612v-.834c0-1.203.222-2.327.666-3.369a8.472 8.472 0 0 1 1.854-2.691 8.21 8.21 0 0 1 2.79-1.771 9.308 9.308 0 0 1 3.474-.645c1.464 0 2.73.26 3.798.781a7.486 7.486 0 0 1 2.628 1.928 8.218 8.218 0 0 1 1.512 2.501c.324.903.486 1.736.486 2.501v2.223h-14.4zm5.976-7.363c-.792 0-1.53.121-2.214.364a5.238 5.238 0 0 0-1.8 1.024 5.514 5.514 0 0 0-1.26 1.546c-.324.59-.534 1.233-.63 1.928h11.52a5.59 5.59 0 0 0-.558-2.015 5.182 5.182 0 0 0-1.26-1.528 5.548 5.548 0 0 0-1.764-.973 5.926 5.926 0 0 0-2.034-.346z"/><polyline points="138.566 22.637 145.265 22.637 145.265 3.363 138.789 3.363 138.789 .867 148.169 .867 148.169 22.637 154.868 22.637 154.868 25.133 138.566 25.133 138.566 22.637"/><path d="M172.815 21.965h-.444a5.122 5.122 0 0 1-1.127 1.408 5.54 5.54 0 0 1-1.479.985 5.476 5.476 0 0 1-1.682.581 7.61 7.61 0 0 1-1.7.194c-1.233 0-2.378-.2-3.438-.599a7.392 7.392 0 0 1-2.79-1.724 7.932 7.932 0 0 1-1.886-2.799 9.605 9.605 0 0 1-.684-3.819v-.564c0-1.407.234-2.668.703-3.783a8.193 8.193 0 0 1 1.884-2.817 7.392 7.392 0 0 1 2.773-1.742 9.077 9.077 0 0 1 3.364-.598c1.257 0 2.433.263 3.53.791 1.096.528 1.94 1.344 2.532 2.446h.444V0h2.883v24.64h-2.883v-2.675zm-6.137.563c.862 0 1.663-.152 2.402-.457a5.14 5.14 0 0 0 1.941-1.303 6.04 6.04 0 0 0 1.313-2.024 6.886 6.886 0 0 0 .48-2.622v-.422a6.964 6.964 0 0 0-.48-3.01 5.977 5.977 0 0 0-1.313-1.961 5.093 5.093 0 0 0-1.959-1.32 6.183 6.183 0 0 0-2.384-.476c-.863 0-1.67.153-2.422.458a5.077 5.077 0 0 0-1.959 1.303 6.059 6.059 0 0 0-1.293 2.007 7.07 7.07 0 0 0-.462 2.569v.563c0 .986.153 1.866.462 2.64a5.95 5.95 0 0 0 1.293 1.989 5.144 5.144 0 0 0 1.941 1.267 6.344 6.344 0 0 0 2.44.339z"/></g></svg></div>
+    <p>UK Sports Club Bike Tour &middot; 176 Venues &middot; ~1,878 Miles &middot; 27 Days</p>
+  </div>
+</footer>
+
+<script>
+// ── Route Data ──
+const ROUTE_DATA = {"mainland_days": [{"day": 1, "distance_miles": 53.3, "num_stops": 3, "start": "Plymouth Argyle", "end": "Exeter City", "stops": [{"name": "Plymouth Argyle", "category": "Football", "postcode": "PL3 4NR", "address": "Billacombe Road, Plymouth", "lat": 50.392472, "lon": -4.140929}, {"name": "Exeter Chiefs", "category": "Rugby Union", "postcode": "EX2 7NN", "address": "Sandy Park, Harcombe Lane, Exeter, EX2 7NN", "lat": 50.709609, "lon": -3.468324}, {"name": "Exeter City", "category": "Football", "postcode": "EX4 6PX", "address": "St James Park, Stadium Way, Exeter", "lat": 50.730098, "lon": -3.520756}]}, {"day": 2, "distance_miles": 75.4, "num_stops": 11, "start": "Scarlets", "end": "Newport County", "stops": [{"name": "Scarlets", "category": "Rugby Union", "postcode": "SA14 9UZ", "address": "Parc y Scarlets, Pemberton, Llanelli", "lat": 51.679956, "lon": -4.129516}, {"name": "Ospreys", "category": "Rugby Union", "postcode": "SA1 2FA", "address": "Swansea.com Stadium, Swansea", "lat": 51.642161, "lon": -3.935137}, {"name": "Swansea City", "category": "Football", "postcode": "SA1 2FA", "address": "Swansea.com Stadium, Plasmarl, Swansea", "lat": 51.642161, "lon": -3.935137}, {"name": "Cardiff City", "category": "Football", "postcode": "CF11 8AZ", "address": "Cardiff City Stadium, Leckwith Road, Cardiff", "lat": 51.47332, "lon": -3.206425}, {"name": "The FAW", "category": "Football", "postcode": "CF11 8AW", "address": "Dragon Park, Michaelston Road West, Leckwith, Cardiff, CF11 8AW", "lat": 51.471796, "lon": -3.200727}, {"name": "Cardiff Rugby", "category": "Rugby Union", "postcode": "CF10 1JA", "address": "Cardiff Arms Park, Westgate Street, Cardiff", "lat": 51.479971, "lon": -3.183833}, {"name": "Welsh Rugby Union", "category": "Rugby Union", "postcode": "CF10 1NS", "address": "Principality Stadium, Westgate Street, Cardiff, CF10 1NS", "lat": 51.478283, "lon": -3.182652}, {"name": "Cardiff Dragons", "category": "Netball", "postcode": "CF10 1EP", "address": "Cardiff City House of Sport, Maindy Road, Cardiff", "lat": 51.475764, "lon": -3.179217}, {"name": "Welsh Netball (Cardiff Dragons)", "category": "Netball", "postcode": "CF11 9SW", "address": "Sport Wales National Centre, Sophia Gardens, Cardiff, CF11 9SW, Wales", "lat": 51.486226, "lon": -3.19039}, {"name": "Dragons RFC", "category": "Rugby Union", "postcode": "NP19 0UU", "address": "Rodney Parade, Rodney Road, Newport", "lat": 51.589578, "lon": -2.991256}, {"name": "Newport County", "category": "Football", "postcode": "NP20 1SX", "address": "Rodney Parade, Newport, South Wales", "lat": 51.588, "lon": -2.9881}]}, {"day": 3, "distance_miles": 78.2, "num_stops": 3, "start": "Gloucester Rugby", "end": "Bath Rugby", "stops": [{"name": "Gloucester Rugby", "category": "Rugby Union", "postcode": "GL1 3AX", "address": "Kingsholm Stadium, Off Barton Street, Gloucester", "lat": 51.871149, "lon": -2.242305}, {"name": "Swindon Town", "category": "Football", "postcode": "SN1 2ED", "address": "County Ground, County Road, Swindon, Wiltshire", "lat": 51.564786, "lon": -1.769922}, {"name": "Bath Rugby", "category": "Rugby Union", "postcode": "BA1 2BH", "address": "The Recreation Ground, Pulteney Road, Bath,", "lat": 51.383204, "lon": -2.368124}]}, {"day": 4, "distance_miles": 56.0, "num_stops": 5, "start": "Bristol Flyers", "end": "Somerset", "stops": [{"name": "Bristol Flyers", "category": "Basketball", "postcode": "BS34 8LP", "address": "SGS College Arena, WISE Campus, New Road, Stoke Gifford, Bristol", "lat": 51.512639, "lon": -2.555481}, {"name": "Bristol Rovers", "category": "Football", "postcode": "BS7 0AQ", "address": "Memorial Stadium, Filton Avenue, Horfield, Bristol", "lat": 51.487415, "lon": -2.583806}, {"name": "Bristol City", "category": "Football", "postcode": "BS3 2EJ", "address": "Ashton Gate Stadium, Ashton Road, Bristol", "lat": 51.440711, "lon": -2.620604}, {"name": "Bristol Bears", "category": "Rugby Union", "postcode": "BS3 2EJ", "address": "Ashton Gate Stadium, Ashton Road, Bristol", "lat": 51.440711, "lon": -2.620604}, {"name": "Somerset", "category": "Cricket", "postcode": "TA1 1JT", "address": "County Ground, Taunton", "lat": 51.018929, "lon": -3.099524}]}, {"day": 5, "distance_miles": 54.6, "num_stops": 4, "start": "Bournemouth", "end": "Portsmouth", "stops": [{"name": "Bournemouth", "category": "Football", "postcode": "BH7 7AF", "address": "Vitality Stadium, Kings Park, Bournemouth,", "lat": 50.735313, "lon": -1.839234}, {"name": "Southampton", "category": "Football", "postcode": "SO14 5FP", "address": "St Mary's Stadium, Britannia Road, Southampton", "lat": 50.906521, "lon": -1.390814}, {"name": "Hampshire", "category": "Cricket", "postcode": "SO30 3XH", "address": "Rose Bowl (The Ageas Bowl), Botley Road, Southampton", "lat": 50.924767, "lon": -1.320772}, {"name": "Portsmouth", "category": "Football", "postcode": "PO4 8RA", "address": "Fratton Park, 44 Frogmore Road, Southsea, Portsmouth", "lat": 50.795912, "lon": -1.064868}]}, {"day": 6, "distance_miles": 66.8, "num_stops": 5, "start": "Brighton & Hove Albion", "end": "Charlton Athletic", "stops": [{"name": "Brighton & Hove Albion", "category": "Football", "postcode": "BN1 9BL", "address": "AMEX Community Stadium, Village Way, Brighton and Hove", "lat": 50.860911, "lon": -0.084253}, {"name": "Crawley Town", "category": "Football", "postcode": "RH11 9RX", "address": "Broadfield Stadium, Winfield Way, Crawley, West Sussex", "lat": 51.099564, "lon": -0.195367}, {"name": "Crystal Palace", "category": "Football", "postcode": "SE25 6PU", "address": "Selhurst Park Stadium, Holmesdale Road, London", "lat": 51.397894, "lon": -0.085898}, {"name": "Bromley", "category": "Football", "postcode": "BR2 9EF", "address": "Hayes Lane, 89 Hayes Lane, Bromley, London", "lat": 51.390984, "lon": 0.017736}, {"name": "Charlton Athletic", "category": "Football", "postcode": "SE7 8BL", "address": "The Valley, London, SE7 8BL", "lat": 51.486242, "lon": 0.037178}]}, {"day": 7, "distance_miles": 89.3, "num_stops": 3, "start": "Gillingham", "end": "Essex", "stops": [{"name": "Gillingham", "category": "Football", "postcode": "ME7 4DD", "address": "Priestfield Stadium, Priestfield Road, Gillingham, Kent", "lat": 51.384872, "lon": 0.559788}, {"name": "Kent", "category": "Cricket", "postcode": "CT1 3NZ", "address": "St Lawrence Ground, The Drive, Canterbury", "lat": 51.268294, "lon": 1.091514}, {"name": "Essex", "category": "Cricket", "postcode": "CM2 0PG", "address": "County Ground, New Writtle Street, Chelmsford, Essex", "lat": 51.731919, "lon": 0.46679}]}, {"day": 8, "distance_miles": 71.3, "num_stops": 19, "start": "Leyton Orient", "end": "Harlequins", "stops": [{"name": "Leyton Orient", "category": "Football", "postcode": "E10 5NF", "address": "Breyer Group Stadium, Brisbane Road, Leyton, London", "lat": 51.560214, "lon": -0.011858}, {"name": "London Lions", "category": "Basketball", "postcode": "E20 3HB", "address": "Copper Box Arena, Queen Elizabeth Olympic Park, Stratford", "lat": 51.5384, "lon": -0.0136}, {"name": "London Pulse", "category": "Netball", "postcode": "E20 3HB", "address": "Copper Box Arena, Queen Elizabeth Olympic Park, London", "lat": 51.5384, "lon": -0.0136}, {"name": "West Ham", "category": "Football", "postcode": "E20 2ST", "address": "London Stadium, London", "lat": 51.538636, "lon": -0.016404}, {"name": "MIllwall", "category": "Football", "postcode": "SE16 3LN", "address": "The Den, John Berylson Wy, London", "lat": 51.486672, "lon": -0.051027}, {"name": "Surrey", "category": "Cricket", "postcode": "SE11 5SS", "address": "The Oval, Kennington, London", "lat": 51.482955, "lon": -0.114629}, {"name": "AFC Wimbledon", "category": "Football", "postcode": "SW17 0NR", "address": "Plough Lane, Wimbledon, London", "lat": 51.431533, "lon": -0.187557}, {"name": "Chelsea", "category": "Football", "postcode": "SW6 1HS", "address": "Stamford Bridge, Fullham Road, London", "lat": 51.481125, "lon": -0.190273}, {"name": "England & Wales Cricket Board (ECB)", "category": "Cricket", "postcode": "NW8 8QN", "address": "Lord's Cricket Ground, St John's Wood, London, NW8 8QN", "lat": 51.528546, "lon": -0.173053}, {"name": "Arsenal", "category": "Football", "postcode": "N7 7AJ", "address": "Emirates Stadium - London", "lat": 51.554293, "lon": -0.108449}, {"name": "Tottenham Hotspur", "category": "Football", "postcode": "N17 0BX", "address": "Tottenham Hotspur Stadium, 782 High Road, London", "lat": 51.605745, "lon": -0.066367}, {"name": "Saracens", "category": "Rugby Union", "postcode": "NW4 1RL", "address": "StoneX Stadium, Welldon Crescent, Hendon, London", "lat": 51.603876, "lon": -0.226334}, {"name": "Barnet", "category": "Football", "postcode": "HA8 6AG", "address": "Hive Stadium, Camrose Avenue, Canons Park, Edgware, London", "lat": 51.60152, "lon": -0.288851}, {"name": "The FA (Football Association)", "category": "Football", "postcode": "HA9 0WS", "address": "Wembley Stadium, Wembley, London, HA9 0WS", "lat": 51.556694, "lon": -0.279643}, {"name": "Queens Park Rangers", "category": "Football", "postcode": "W12 7PJ", "address": "MATRADE Loftus Road Stadium, Loftus Road, S Africa Road, London", "lat": 51.509694, "lon": -0.232085}, {"name": "Fulham", "category": "Football", "postcode": "SW6 6HH", "address": "Craven Cottage Stadium, Stevenage Road, London", "lat": 51.47452, "lon": -0.220587}, {"name": "Brentford", "category": "Football", "postcode": "TW8 0RU", "address": "Gtech Community Stadium, Lionel Road S, Brentford", "lat": 51.490339, "lon": -0.288308}, {"name": "Rugby Football Union", "category": "Rugby Union", "postcode": "TW2 7BA", "address": "Rugby House, Twickenham Stadium, 200 Whitton Road, Twickenham, London, TW2 7BA", "lat": 51.455086, "lon": -0.340076}, {"name": "Harlequins", "category": "Rugby Union", "postcode": "TW2 7SX", "address": "Twickenham Stoop, 21 Ealing Road, Twickenham", "lat": 51.45095, "lon": -0.342687}]}, {"day": 9, "distance_miles": 83.8, "num_stops": 5, "start": "Surrey 89ers", "end": "Wycombe Wanderers", "stops": [{"name": "Surrey 89ers", "category": "Basketball", "postcode": "GU2 7XX", "address": "Surrey Sports Park, University of Surrey, Guildford", "lat": 51.241012, "lon": -0.607443}, {"name": "Reading", "category": "Football", "postcode": "RG2 0FL", "address": "Madejski Stadium, Stadium Way, Reading", "lat": 51.422326, "lon": -0.983475}, {"name": "Reading Rockets", "category": "Basketball", "postcode": "RG1 8EQ", "address": "Typically play at venues in Reading", "lat": 51.46367, "lon": -0.985466}, {"name": "Oxford United", "category": "Football", "postcode": "OX4 4XP", "address": "Kassam Stadium, Grenoble Road, Littlemore, Oxford, OX4 4XP", "lat": 51.717071, "lon": -1.210938}, {"name": "Wycombe Wanderers", "category": "Football", "postcode": "HP12 4HJ", "address": "Adams Park, Hillbottom Road, Wycombe", "lat": 51.631583, "lon": -0.795977}]}, {"day": 10, "distance_miles": 63.7, "num_stops": 6, "start": "London Cavaliers", "end": "Hemel Storm", "stops": [{"name": "London Cavaliers", "category": "Basketball", "postcode": "UB8 1UW", "address": "Uxbridge College Sports Hall, Park Road, Uxbridge, West London", "lat": 51.543476, "lon": -0.476834}, {"name": "Watford", "category": "Football", "postcode": "WD18 0ER", "address": "Vicarage Road Stadium, Vicarage Road, Watford", "lat": 51.649275, "lon": -0.400727}, {"name": "London Mavericks", "category": "Netball", "postcode": "AL10 9EU", "address": "Hertfordshire Sports Village, University of Hertfordshire, College Lane, Hatfield", "lat": 51.76071, "lon": -0.250279}, {"name": "Stevenage", "category": "Football", "postcode": "SG2 8RH", "address": "Broadhall Way, Stevenage", "lat": 51.890113, "lon": -0.194264}, {"name": "Luton Town", "category": "Football", "postcode": "LU4 8AW", "address": "Kenilworth Road Stadium, Luton", "lat": 51.884023, "lon": -0.432336}, {"name": "Hemel Storm", "category": "Basketball", "postcode": "HP1 1JS", "address": "Everyone Active Hemel Hempstead Sports Centre, Park Road, Hemel Hempstead", "lat": 51.746488, "lon": -0.476462}]}, {"day": 11, "distance_miles": 54.3, "num_stops": 2, "start": "Milton Keynes Dons", "end": "Cambridge United", "stops": [{"name": "Milton Keynes Dons", "category": "Football", "postcode": "MK1 1ST", "address": "Stadium MK, Stadium Way, Milton Keynes, Buckinghamshire", "lat": 52.010801, "lon": -0.734859}, {"name": "Cambridge United", "category": "Football", "postcode": "CB5 8LN", "address": "Abbey Stadium, Newmarket Road, Cambridge", "lat": 52.212859, "lon": 0.154049}]}, {"day": 12, "distance_miles": 73.0, "num_stops": 4, "start": "Colchester United", "end": "Norwich City", "stops": [{"name": "Colchester United", "category": "Football", "postcode": "CO4 5UP", "address": "Colchester Community Stadium, United Way, Colchester", "lat": 51.923173, "lon": 0.900241}, {"name": "Essex Rebels", "category": "Basketball", "postcode": "CO4 9FF", "address": "University of Essex Sports Complex / local venues in Colchester", "lat": 51.919042, "lon": 0.918155}, {"name": "Ipswich Town", "category": "Football", "postcode": "IP1 2DA", "address": "Portman Road Stadium, Portman Road, Ipswich", "lat": 52.054746, "lon": 1.144645}, {"name": "Norwich City", "category": "Football", "postcode": "NR1 1JE", "address": "Carrow Road Stadium, Carrow Road, Norwich, NR1 1JE", "lat": 52.622405, "lon": 1.308627}]}, {"day": 13, "distance_miles": 89.3, "num_stops": 5, "start": "Peterborough United", "end": "Leicester Tigers", "stops": [{"name": "Peterborough United", "category": "Football", "postcode": "PE2 8AL", "address": "London Road Stadium, London Road, Peterborough", "lat": 52.565275, "lon": -0.240265}, {"name": "Northampton Saints", "category": "Rugby Union", "postcode": "NN1 5RT", "address": "cinch Stadium at Franklin\u2019s Gardens, Franklin\u2019s Gardens, Northampton", "lat": 52.239231, "lon": -0.867538}, {"name": "Northampton Town", "category": "Football", "postcode": "NN5 5QA", "address": "Sixfields Stadium, Northampton", "lat": 52.23506, "lon": -0.934215}, {"name": "Leicester City", "category": "Football", "postcode": "LE2 7FL", "address": "King Power Stadium, Filberty Way, Leicester", "lat": 52.620622, "lon": -1.143047}, {"name": "Leicester Tigers", "category": "Rugby Union", "postcode": "LE2 7TR", "address": "Mattioli Woods Welford Road Stadium, Aylestone Road, Leicester", "lat": 52.624629, "lon": -1.132893}]}, {"day": 14, "distance_miles": 79.4, "num_stops": 10, "start": "Leicester Riders", "end": "Leicester Warriors", "stops": [{"name": "Leicester Riders", "category": "Basketball", "postcode": "LE1 3UL", "address": "Mattioli Arena, 12 Memory Lane, Leicester LE1 3UL", "lat": 52.643075, "lon": -1.128938}, {"name": "Nottinghamshire", "category": "Cricket", "postcode": "NG2 6AG", "address": "Trent Bridge Cricket Ground, West Bridgford, Nottingham", "lat": 52.935993, "lon": -1.131837}, {"name": "Nottingham Forest", "category": "Football", "postcode": "NG2 5FJ", "address": "The City Ground Stadium, West Bridgford, Nottingham", "lat": 52.939464, "lon": -1.133196}, {"name": "Nottingham Forest Netball", "category": "Netball", "postcode": "NG1 1LA", "address": "Motorpoint Arena Nottingham, Bolero Square, Nottingham", "lat": 52.952483, "lon": -1.139649}, {"name": "Nottingham Hoods", "category": "Basketball", "postcode": "NG7 1LB", "address": "Nottingham Indoor Sports Arena / local courts in Nottingham", "lat": 52.947494, "lon": -1.16996}, {"name": "Derby County", "category": "Football", "postcode": "DE24 8XL", "address": "Pride Park Stadium, Derby", "lat": 52.914633, "lon": -1.447968}, {"name": "Derby Trailblazers", "category": "Basketball", "postcode": "DE24 0BT", "address": "Clarence Wiggins Sports Centre, Noel\u2011Baker L.E.A.D Academy, Bracknell Drive, Alvaston, Derby", "lat": 52.886213, "lon": -1.435577}, {"name": "Loughborough Lightning", "category": "Netball", "postcode": "LE11 3GH", "address": "Sir David Wallace Sports Centre, Loughborough University", "lat": 52.7653, "lon": -1.2274}, {"name": "Basketball England", "category": "Basketball", "postcode": "LE11 3QF", "address": "England Basketball Centre, SportPark, Loughborough University, LE11 3QF", "lat": 52.761285, "lon": -1.247418}, {"name": "Leicester Warriors", "category": "Basketball", "postcode": "LE3 1HR", "address": "Braunstone Leisure Centre, Braunstone Ave, Leicester", "lat": 52.632224, "lon": -1.181903}]}, {"day": 15, "distance_miles": 60.1, "num_stops": 2, "start": "Coventry City", "end": "Cheltenham Town", "stops": [{"name": "Coventry City", "category": "Football", "postcode": "CV6 6GE", "address": "Coventry Building Society Arena, Judds Lane, Coventry", "lat": 52.448773, "lon": -1.496283}, {"name": "Cheltenham Town", "category": "Football", "postcode": "GL52 5NA", "address": "Whaddon Road, Cheltenham, Gloucestershire", "lat": 51.905584, "lon": -2.062085}]}, {"day": 16, "distance_miles": 69.7, "num_stops": 9, "start": "England Netball", "end": "Burton Albion", "stops": [{"name": "England Netball", "category": "Netball", "postcode": "B69 4DR", "address": "Netball House, 1-7 King Street, West Midlands", "lat": 52.4845, "lon": -2.0128}, {"name": "Warwickshire", "category": "Cricket", "postcode": "B5 7QU", "address": "Edgbaston Cricket Ground, Edgbaston Road, Birmingham", "lat": 52.455377, "lon": -1.903841}, {"name": "Birmingham City", "category": "Football", "postcode": "B9 4RL", "address": "St Andrew @ Knighthead, Cattell Road, Birmingham", "lat": 52.474936, "lon": -1.864108}, {"name": "Birmingham Panthers", "category": "Netball", "postcode": "B1 2AA", "address": "Arena Birmingham, King Edwards Rd, Birmingham", "lat": 52.479938, "lon": -1.914905}, {"name": "Aston Villa", "category": "Football", "postcode": "B6 6HE", "address": "Villa Park, Trinity Road, Birmingham", "lat": 52.5085, "lon": -1.884941}, {"name": "West Bromwich Albion", "category": "Football", "postcode": "B71 4LF", "address": "The Hawthorns Stadium, Halfords Lane, West Bromwich", "lat": 52.509018, "lon": -1.963293}, {"name": "Walsall", "category": "Football", "postcode": "WS1 4SA", "address": "Bescot Stadium, Bescot Crescent, Walsall, West Midlands", "lat": 52.565534, "lon": -1.991159}, {"name": "Wolves", "category": "Football", "postcode": "WV1 4QR", "address": "Molineux Stadium, Waterloo Road, Wolverhampton,", "lat": 52.59021, "lon": -2.13122}, {"name": "Burton Albion", "category": "Football", "postcode": "DE13 0AR", "address": "Pirelli Stadium, Princess Way, Burton upon Trent", "lat": 52.82148, "lon": -1.626998}]}, {"day": 17, "distance_miles": 59.5, "num_stops": 4, "start": "Stoke City", "end": "Shrewsbury Town", "stops": [{"name": "Stoke City", "category": "Football", "postcode": "ST4 4EG", "address": "Bet365 Stadium, Stanley Matthews Way, Stoke-on-Trent", "lat": 52.988272, "lon": -2.176078}, {"name": "Port Vale", "category": "Football", "postcode": "ST6 1AW", "address": "Vale Park, Hamil Road, Burslem, Stoke on Trent", "lat": 53.050408, "lon": -2.191698}, {"name": "Crewe Alexandra", "category": "Football", "postcode": "CW2 6EB", "address": "Alexandra Stadium, Gresty Road, Crewe, Cheshire", "lat": 53.087902, "lon": -2.436192}, {"name": "Shrewsbury Town", "category": "Football", "postcode": "SY2 6AH", "address": "New Meadow, Oteley Road, Shrewsbury, Shropshire", "lat": 52.707141, "lon": -2.742528}]}, {"day": 18, "distance_miles": 87.9, "num_stops": 8, "start": "Wrexham", "end": "Stockport County", "stops": [{"name": "Wrexham", "category": "Football", "postcode": "LL11 2AH", "address": "STOK Racecourse, Mold Road, Wrexham", "lat": 53.051259, "lon": -3.003854}, {"name": "Cheshire Phoenix", "category": "Basketball", "postcode": "CH65 9LB", "address": "Cheshire Oaks Arena, Ellesmere Port Sports Village, Stanney Lane, Ellesmere Port", "lat": 53.263384, "lon": -2.887723}, {"name": "Tranmere Rovers", "category": "Football", "postcode": "CH42 9PY", "address": "Prenton Park, Prenton Road West, Birkenhead, Merseyside", "lat": 53.373259, "lon": -3.035867}, {"name": "Everton", "category": "Football", "postcode": "L3 0BW", "address": "Hill Dickinson Stadium, Regent Road, Liverpool", "lat": 53.42658, "lon": -3.001344}, {"name": "Liverpool", "category": "Football", "postcode": "L4 0TH", "address": "Anfield Stadium, Anfield Road, Anfield, Liverpool", "lat": 53.431284, "lon": -2.961584}, {"name": "St Helens", "category": "Rugby League", "postcode": "WA9 2DF", "address": "Totally Wicked Stadium, Cawley Rd, St Helens", "lat": 53.4537, "lon": -2.7365}, {"name": "Warrington Wolves", "category": "Rugby League", "postcode": "WA1 1HS", "address": "Halliwell Jones Stadium, Warrington", "lat": 53.39, "lon": -2.5936}, {"name": "Stockport County", "category": "Football", "postcode": "SK3 9DD", "address": "Edgeley Park Stadium, Stockport", "lat": 53.399939, "lon": -2.167126}]}, {"day": 19, "distance_miles": 72.0, "num_stops": 14, "start": "Manchester City", "end": "Blackpool", "stops": [{"name": "Manchester City", "category": "Football", "postcode": "M11 3FF", "address": "Etihad Stadium - Etihad Campus, Manchester", "lat": 53.484222, "lon": -2.202811}, {"name": "Rugby Football League (RFL)", "category": "Rugby League", "postcode": "M11 3FF", "address": "Rugby League Central, Unit 1, Suite 1, Sportcity, Manchester M11 3FF, England", "lat": 53.484222, "lon": -2.202811}, {"name": "Manchester Thunder", "category": "Netball", "postcode": "M11 3FF", "address": "National Cycling Centre, Stuart St, Manchester", "lat": 53.484222, "lon": -2.202811}, {"name": "Manchester Basketball (Giants)", "category": "Basketball", "postcode": "M11 3FF", "address": "National Basketball Performance Centre, Belle Vue Sports Village, Stuart St, Manchester", "lat": 53.484222, "lon": -2.202811}, {"name": "Salford City", "category": "Football", "postcode": "M7 3PZ", "address": "Peninsula Stadium, Moor Lane, Salford, Greater Manchester", "lat": 53.513759, "lon": -2.278352}, {"name": "Lancashire", "category": "Cricket", "postcode": "M16 0PX", "address": "Old Trafford Cricket Ground, Lancashire, Mancheste", "lat": 53.457273, "lon": -2.287336}, {"name": "Manchester United", "category": "Football", "postcode": "M16 0RA", "address": "Old Trafford, Stretford, Manchester", "lat": 53.462576, "lon": -2.291032}, {"name": "Sale Sharks", "category": "Rugby Union", "postcode": "M30 7EY", "address": "CorpAcq Stadium (AJ Bell Stadium), Barton Road, Salford, Greater Manchester", "lat": 53.469646, "lon": -2.376012}, {"name": "Salford Red Devils", "category": "Rugby League", "postcode": "M30 7EY", "address": "Salford Community Stadium (AJ Bell Stadium), Barton Rd, Salford", "lat": 53.469646, "lon": -2.376012}, {"name": "Leigh Leopards", "category": "Rugby League", "postcode": "WN7 4DU", "address": "Leigh Sports Village, Leigh", "lat": 53.494799, "lon": -2.525145}, {"name": "Bolton Wanderers", "category": "Football", "postcode": "BL6 6JW", "address": "Toughsheet  Community Stadium, Burnden Way, Horwich Bolton", "lat": 53.580185, "lon": -2.536279}, {"name": "Wigan Athletic", "category": "Football", "postcode": "WN5 0UZ", "address": "Brick Community Stadium, Loire Dr, Robin Park, Wigan", "lat": 53.547209, "lon": -2.654516}, {"name": "Wigan Warriors", "category": "Rugby League", "postcode": "WN5 0UY", "address": "Brick Community Stadium (DW Stadium), Robin Park Rd, Wigan", "lat": 53.5464, "lon": -2.6558}, {"name": "Blackpool", "category": "Football", "postcode": "FY1 6JJ", "address": "Bloomfield Road, Blackpool", "lat": 53.805503, "lon": -3.048527}]}, {"day": 20, "distance_miles": 72.4, "num_stops": 6, "start": "Barrow", "end": "Burnley", "stops": [{"name": "Barrow", "category": "Football", "postcode": "LA14 5UW", "address": "Holker Street Stadium, Barrow-in-Furness, Cumbria", "lat": 54.123382, "lon": -3.235963}, {"name": "Fleetwood Town", "category": "Football", "postcode": "FY7 6TX", "address": "Highbury Stadium, Fleetwood, Lancashire", "lat": 53.916836, "lon": -3.022947}, {"name": "Preston North End", "category": "Football", "postcode": "PR1 6RU", "address": "Deepdale Stadium, Sir Tom Finney Way, Preston", "lat": 53.772236, "lon": -2.689327}, {"name": "Blackburn Rovers", "category": "Football", "postcode": "BB2 4JF", "address": "Ewood Park, Blackburn", "lat": 53.729141, "lon": -2.489562}, {"name": "Accrington Stanley", "category": "Football", "postcode": "BB5 5BX", "address": "Crown Ground, Livingstone Road, Accrington, Lancashire", "lat": 53.76419, "lon": -2.370435}, {"name": "Burnley", "category": "Football", "postcode": "BB10 4BX", "address": "Turf Moor Stadium, 52-56 Harry Potts Way, Burnley", "lat": 53.788484, "lon": -2.230326}]}, {"day": 21, "distance_miles": 73.7, "num_stops": 11, "start": "Oldham Athletic", "end": "Barnsley", "stops": [{"name": "Oldham Athletic", "category": "Football", "postcode": "OL1 2PA", "address": "Boundary Park, Oldham, Greater Manchester", "lat": 53.554345, "lon": -2.127854}, {"name": "Huddersfield Giants", "category": "Rugby League", "postcode": "HD1 6PG", "address": "John Smith\u2019s Stadium, Stadium Way, Huddersfield", "lat": 53.654643, "lon": -1.76894}, {"name": "Huddersfield Town", "category": "Football", "postcode": "HD1 6PG", "address": "Kirklees Stadium, Stadium Way, Huddersfield", "lat": 53.654643, "lon": -1.76894}, {"name": "Bradford Dragons", "category": "Basketball", "postcode": "BD1 2LA", "address": "Bradford College Sports Complex / local courts in Bradford", "lat": 53.797516, "lon": -1.768204}, {"name": "Bradford City", "category": "Football", "postcode": "BD8 7DY", "address": "Valley Parade, Bradford", "lat": 53.803593, "lon": -1.759486}, {"name": "Yorkshire", "category": "Cricket", "postcode": "LS6 3BU", "address": "Headingley Cricket Ground, Leeds", "lat": 53.817465, "lon": -1.580466}, {"name": "Leeds Rhinos", "category": "Rugby League", "postcode": "LS6 3BR", "address": "Headingley Rugby Stadium, St Michael\u2019s Ln, Leeds", "lat": 53.816081, "lon": -1.580617}, {"name": "NIC Leeds Rhinos Netball", "category": "Netball", "postcode": "LS2 8BY", "address": "First Direct Bank Arena, Arena Way, Leeds", "lat": 53.802997, "lon": -1.541847}, {"name": "Leeds", "category": "Football", "postcode": "LS11 0ES", "address": "Elland Road Stadium, Beeston, Leeds", "lat": 53.77773, "lon": -1.573108}, {"name": "Wakefield Trinity", "category": "Rugby League", "postcode": "WF1 3QJ", "address": "Belle Vue, Belle Vue Rd, Wakefield", "lat": 53.696621, "lon": -1.498836}, {"name": "Barnsley", "category": "Football", "postcode": "S71 1ET", "address": "Oakwell Stadium, Grove Street, Barnsley", "lat": 53.552285, "lon": -1.468633}]}, {"day": 22, "distance_miles": 55.9, "num_stops": 7, "start": "Doncaster Rovers", "end": "Mansfield Town", "stops": [{"name": "Doncaster Rovers", "category": "Football", "postcode": "DN4 5JW", "address": "Eco-power stadium, Stadium Way, Doncaster", "lat": 53.509792, "lon": -1.112956}, {"name": "Rotheram United", "category": "Football", "postcode": "S60 1AH", "address": "New York Stadium, New York st, Rothertham", "lat": 53.428, "lon": -1.3622}, {"name": "Sheffield Sharks", "category": "Basketball", "postcode": "S9 1UE", "address": "Canon Medical Arena, Park Community Arena, Sheffield", "lat": 53.412483, "lon": -1.398102}, {"name": "Sheffield Wednesday", "category": "Football", "postcode": "S6 1SW", "address": "Hillsborough Stadium, 76 Penistone Road North, Sheffield", "lat": 53.410844, "lon": -1.500859}, {"name": "Sheffield United", "category": "Football", "postcode": "S2 4SU", "address": "Bramall Lane Stadium, Bramall Lane, Highfield, Sheffield", "lat": 53.369878, "lon": -1.470511}, {"name": "Chesterfield", "category": "Football", "postcode": "S41 8NZ", "address": "SMH Group Stadium, Sheffield Road, Chesterfield, Derbyshire", "lat": 53.253614, "lon": -1.425003}, {"name": "Mansfield Town", "category": "Football", "postcode": "NG18 5DA", "address": "One Call Stadium, Field Mill, Quarry Lane, Mansfield", "lat": 53.137455, "lon": -1.200133}]}, {"day": 23, "distance_miles": 66.3, "num_stops": 5, "start": "Lincoln City", "end": "Hull City", "stops": [{"name": "Lincoln City", "category": "Football", "postcode": "LN5 7XR", "address": "LNER Stadium, Cross St, Lincoln", "lat": 53.219324, "lon": -0.539508}, {"name": "Grimsby Town", "category": "Football", "postcode": "DN34 5BL", "address": "Blundell Park, Grimsby, North East Lincolnshire", "lat": 53.553267, "lon": -0.097804}, {"name": "Hull Kingston Rovers", "category": "Rugby League", "postcode": "HU9 5HE", "address": "Craven Park, Craven Park Rd, Hull", "lat": 53.75414, "lon": -0.265663}, {"name": "Hull FC", "category": "Rugby League", "postcode": "HU3 6HU", "address": "MKM Stadium, Hull KR vs FC; MKM Stadium, Hull", "lat": 53.745752, "lon": -0.368022}, {"name": "Hull City", "category": "Football", "postcode": "HU3 6HU", "address": "MKM Stadium, Walton Street, Hull", "lat": 53.745752, "lon": -0.368022}]}, {"day": 24, "distance_miles": 84.3, "num_stops": 3, "start": "Castleford Tigers", "end": "Middlesbrough", "stops": [{"name": "Castleford Tigers", "category": "Rugby League", "postcode": "WF10 1JU", "address": "Wheldon Road, Wheldon Rd, Castleford", "lat": 53.7167, "lon": -1.35}, {"name": "Harrogate Town", "category": "Football", "postcode": "HG2 7SA", "address": "Wetherby Road, Harrogate, North Yorkshire", "lat": 53.99151, "lon": -1.517057}, {"name": "Middlesbrough", "category": "Football", "postcode": "TS3 6RS", "address": "Riverside Stadium, Middlehaven Way, Middlesborough", "lat": 54.578137, "lon": -1.217779}]}, {"day": 25, "distance_miles": 31.5, "num_stops": 5, "start": "Durham", "end": "Newcastle Red Bulls", "stops": [{"name": "Durham", "category": "Cricket", "postcode": "DH3 3QR", "address": "Riverside Ground, Chester-le-Street, County Durham", "lat": 54.848974, "lon": -1.562217}, {"name": "Sunderland", "category": "Football", "postcode": "SR5 1SU", "address": "Stadium of Light, Monkwearmouth, Sunderland", "lat": 54.914071, "lon": -1.389313}, {"name": "Newcastle", "category": "Football", "postcode": "NE1 4ST", "address": "St James' Park Stadium, Barrack Road, Newcastle Upon Tyne", "lat": 54.975225, "lon": -1.622337}, {"name": "Newcastle Eagles", "category": "Basketball", "postcode": "NE4 7ST", "address": "Vertu Motors Arena, Scotswood Rd, Newcastle upon Tyne", "lat": 54.963343, "lon": -1.639377}, {"name": "Newcastle Red Bulls", "category": "Rugby Union", "postcode": "NE13 8AF", "address": "Kingston Park Stadium, Kingston Park, Newcastle upon Tyne", "lat": 55.015622, "lon": -1.676537}]}, {"day": 26, "distance_miles": 84.1, "num_stops": 9, "start": "Kilmarnock", "end": "Falkirk", "stops": [{"name": "Kilmarnock", "category": "Football", "postcode": "KA1 2DP", "address": "Rugby Park, Rugby Road, Kilmarnock", "lat": 55.605433, "lon": -4.508544}, {"name": "St Mirren", "category": "Football", "postcode": "PA1 2SJ", "address": "St Mirren Park, Greenhill Road, Paisley", "lat": 55.846804, "lon": -4.436295}, {"name": "Glasgow Warriors", "category": "Rugby Union", "postcode": "G51 4BN", "address": "Scotstoun Stadium, 72 Danes Drive, Scotstoun, Glasgow,", "lat": 55.876276, "lon": -4.363464}, {"name": "Rangers", "category": "Football", "postcode": "G51 2XD", "address": "Ibrox Stadium, Paisley Road West, Glasgow", "lat": 55.852593, "lon": -4.309539}, {"name": "Celtic", "category": "Football", "postcode": "G40 3RE", "address": "Celtic Park, Glasgow", "lat": 55.849219, "lon": -4.206471}, {"name": "Scottish Football Association", "category": "Football", "postcode": "G42 9AY", "address": "Hampden Park, Glasgow, G42 9AY", "lat": 55.82523, "lon": -4.253186}, {"name": "Caledonia Gladiators", "category": "Basketball", "postcode": "G75 0YG", "address": "Playsport Arena, Glasgow Rd, East Kilbride, South Lanarkshire G75 0YG (Scotland)", "lat": 55.741072, "lon": -4.166699}, {"name": "Motherwell", "category": "Football", "postcode": "ML1 2UE", "address": "Fir Park, Brandon Avenue, Motherwell", "lat": 55.797802, "lon": -3.96955}, {"name": "Falkirk", "category": "Football", "postcode": "FK2 7ZT", "address": "Falkirk Stadium, Westfield Road, Falkirk", "lat": 56.020203, "lon": -3.756891}]}, {"day": 27, "distance_miles": 72.3, "num_stops": 8, "start": "Livingston", "end": "Dundee United", "stops": [{"name": "Livingston", "category": "Football", "postcode": "EH54 7EJ", "address": "Almondvale Stadium, Alderstone Road, Livingsto", "lat": 55.87673, "lon": -3.546452}, {"name": "Basketball Scotland (Caledonia Gladiators)", "category": "Basketball", "postcode": "EH12 9DQ", "address": "Sportscotland National Centre, 4th Floor, Caledonia House, South Gyle Crescent, Edinburgh, EH12 9DQ", "lat": 55.934135, "lon": -3.310638}, {"name": "Scottish Rugby Union (Scottish Rugby)", "category": "Rugby Union", "postcode": "EH12 5PJ", "address": "BT Murrayfield Stadium, Roseburn Street, Edinburgh, EH12 5PJ", "lat": 55.941236, "lon": -3.240257}, {"name": "Edinburgh Rugby", "category": "Rugby Union", "postcode": "EH12 5PJ", "address": "Hive Stadium, 42 Saughton Park, Edinburgh", "lat": 55.941236, "lon": -3.240257}, {"name": "Heart of Midlothian", "category": "Football", "postcode": "EH11 2NL", "address": "Tynecastle Park, McLeod Street, Edinburgh", "lat": 55.939129, "lon": -3.23172}, {"name": "Hibernian", "category": "Football", "postcode": "EH7 5SA", "address": "Easter Road, London Road, Edinburgh", "lat": 55.957993, "lon": -3.168524}, {"name": "Dundee", "category": "Football", "postcode": "DD1 4BX", "address": "Dens Park, Clepington Road, Dundee", "lat": 56.457522, "lon": -2.969515}, {"name": "Dundee United", "category": "Football", "postcode": "DD4 7SB", "address": "Tannadice Park, Tannadice Street, Dundee", "lat": 56.474695, "lon": -2.917014}]}], "ni_days": []};
+
+// ── Config ──
+const SPORT_COLORS = {
+  'Football': '#e63946',
+  'Rugby Union': '#457b9d',
+  'Rugby League': '#2a9d8f',
+  'Cricket': '#e9c46a',
+  'Netball': '#f4a261',
+  'Basketball': '#264653'
+};
+
+function catClass(category) {
+  return 'cat-' + category.toLowerCase().replace(/\s+/g, '-');
+}
+function tagClass(category) {
+  return 'tag-' + category.toLowerCase().replace(/\s+/g, '-');
+}
+
+// ── Compute stats ──
+const allDays = [...ROUTE_DATA.mainland_days, ...ROUTE_DATA.ni_days];
+let totalVenues = 0, totalMiles = 0;
+const sportCounts = {};
+allDays.forEach(d => {
+  totalVenues += d.num_stops;
+  totalMiles += d.distance_miles;
+  d.stops.forEach(s => {
+    sportCounts[s.category] = (sportCounts[s.category] || 0) + 1;
+  });
+});
+
+// Update stats
+document.getElementById('stat-venues').textContent = totalVenues;
+document.getElementById('stat-miles').textContent = '~' + Math.round(totalMiles).toLocaleString();
+
+// ── Overview Map ──
+const overviewMap = L.map('overview-map', {
+  scrollWheelZoom: false,
+  zoomControl: true
+}).setView([53.5, -2.0], 6);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 18
+}).addTo(overviewMap);
+
+// Plot all venues
+const allCoords = [];
+allDays.forEach(day => {
+  day.stops.forEach(stop => {
+    const color = SPORT_COLORS[stop.category] || '#999';
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 5,
+      fillColor: color,
+      color: '#fff',
+      weight: 1.5,
+      fillOpacity: 0.85
+    }).addTo(overviewMap);
+    marker.bindPopup(
+      '<strong>' + stop.name + '</strong><br>' +
+      '<span style="color:' + color + ';font-weight:600">' + stop.category + '</span><br>' +
+      '<span style="color:#999;font-size:0.78rem">' + stop.address + '</span>'
+    );
+    allCoords.push([stop.lat, stop.lon]);
+  });
+});
+
+// Draw route line through day stops (mainland only)
+const routeCoords = [];
+ROUTE_DATA.mainland_days.forEach(day => {
+  day.stops.forEach(stop => {
+    routeCoords.push([stop.lat, stop.lon]);
+  });
+});
+L.polyline(routeCoords, {
+  color: '#1a1a1a',
+  weight: 1.5,
+  opacity: 0.25,
+  dashArray: '4 6'
+}).addTo(overviewMap);
+
+if (allCoords.length > 0) {
+  overviewMap.fitBounds(allCoords, { padding: [30, 30] });
+}
+
+// ── Generate Day Cards ──
+const miniMaps = {};
+
+function createDayCard(day) {
+  const card = document.createElement('div');
+  card.className = 'day-card';
+  card.setAttribute('data-day', day.day);
+
+  const distText = day.distance_miles > 0 ? day.distance_miles.toFixed(1) + ' mi' : 'Transfer';
+  const routeText = day.start === day.end ? day.start : day.start + ' \u2192 ' + day.end;
+
+  card.innerHTML =
+    '<div class="day-card-header" onclick="toggleCard(' + day.day + ')">' +
+      '<div class="day-info">' +
+        '<div class="day-number">Day ' + day.day + '</div>' +
+        '<div class="day-route">' + routeText + '</div>' +
+        '<div class="day-meta">' +
+          '<span>' + distText + '</span>' +
+          '<span>' + day.num_stops + ' stop' + (day.num_stops !== 1 ? 's' : '') + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<button class="day-expand-btn" aria-label="Expand day ' + day.day + '">&gt;&gt;</button>' +
+    '</div>' +
+    '<div class="day-body">' +
+      '<div class="day-body-inner">' +
+        '<div class="day-mini-map" id="mini-map-' + day.day + '"></div>' +
+        '<ul class="stop-list">' +
+          day.stops.map(function(stop, i) {
+            return '<li class="stop-item">' +
+              '<div class="stop-dot ' + catClass(stop.category) + '"></div>' +
+              '<div class="stop-details">' +
+                '<div class="stop-name">' + stop.name + '</div>' +
+                '<div class="stop-address">' + stop.address + '</div>' +
+              '</div>' +
+              '<span class="stop-category-tag ' + tagClass(stop.category) + '">' + stop.category + '</span>' +
+            '</li>';
+          }).join('') +
+        '</ul>' +
+      '</div>' +
+    '</div>';
+
+  return card;
+}
+
+function toggleCard(dayNum) {
+  const card = document.querySelector('.day-card[data-day="' + dayNum + '"]');
+  if (!card) return;
+
+  const wasExpanded = card.classList.contains('expanded');
+  card.classList.toggle('expanded');
+
+  // Lazy-load mini map
+  if (!wasExpanded && !miniMaps[dayNum]) {
+    setTimeout(function() {
+      initMiniMap(dayNum);
+    }, 100);
+  } else if (!wasExpanded && miniMaps[dayNum]) {
+    setTimeout(function() {
+      miniMaps[dayNum].invalidateSize();
+    }, 100);
+  }
+}
+
+function initMiniMap(dayNum) {
+  const day = allDays.find(function(d) { return d.day === dayNum; });
+  if (!day) return;
+
+  const mapEl = document.getElementById('mini-map-' + dayNum);
+  if (!mapEl) return;
+
+  const map = L.map(mapEl, {
+    scrollWheelZoom: false,
+    zoomControl: true,
+    dragging: true
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OSM',
+    maxZoom: 18
+  }).addTo(map);
+
+  const coords = [];
+  day.stops.forEach(function(stop, i) {
+    const color = SPORT_COLORS[stop.category] || '#999';
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 7,
+      fillColor: color,
+      color: '#fff',
+      weight: 2,
+      fillOpacity: 0.9
+    }).addTo(map);
+    marker.bindPopup(
+      '<strong>' + (i + 1) + '. ' + stop.name + '</strong><br>' +
+      '<span style="color:' + color + '">' + stop.category + '</span>'
+    );
+    coords.push([stop.lat, stop.lon]);
+  });
+
+  // Route line
+  if (coords.length > 1) {
+    L.polyline(coords, {
+      color: '#1a1a1a',
+      weight: 2.5,
+      opacity: 0.6,
+      dashArray: '6 4'
+    }).addTo(map);
+  }
+
+  if (coords.length > 0) {
+    map.fitBounds(coords, { padding: [30, 30], maxZoom: 13 });
+  }
+
+  miniMaps[dayNum] = map;
+}
+
+// Render mainland days
+const mainlandGrid = document.getElementById('mainland-days');
+ROUTE_DATA.mainland_days.forEach(function(day) {
+  mainlandGrid.appendChild(createDayCard(day));
+});
+
+
+// ── Summary Cards ──
+const longestDay = allDays.reduce(function(a, b) { return a.distance_miles > b.distance_miles ? a : b; });
+const busiestDay = allDays.reduce(function(a, b) { return a.num_stops > b.num_stops ? a : b; });
+
+const summaryData = [
+  {
+    number: totalVenues,
+    label: 'Total Venues',
+    desc: 'Professional sports clubs visited across 6 different sports categories'
+  },
+  {
+    number: '~' + Math.round(totalMiles).toLocaleString(),
+    label: 'Miles Cycled',
+    desc: '27 days cycling across England, Wales, and Scotland'
+  },
+  {
+    number: sportCounts['Football'] || 0,
+    label: 'Football Clubs',
+    desc: 'The most represented sport, from Plymouth Argyle to Dundee United'
+  },
+  {
+    number: (sportCounts['Rugby Union'] || 0) + (sportCounts['Rugby League'] || 0),
+    label: 'Rugby Clubs',
+    desc: 'Combining both Rugby Union and Rugby League venues across the UK'
+  },
+  {
+    number: longestDay.distance_miles.toFixed(1) + ' mi',
+    label: 'Longest Day',
+    desc: 'Day ' + longestDay.day + ': ' + longestDay.start + ' to ' + longestDay.end
+  },
+  {
+    number: busiestDay.num_stops,
+    label: 'Most Stops (Day ' + busiestDay.day + ')',
+    desc: busiestDay.start + ' to ' + busiestDay.end + ' \u2014 a marathon day through ' + (busiestDay.day === 8 ? 'London' : 'the route')
+  }
+];
+
+const summaryGrid = document.getElementById('summary-grid');
+summaryData.forEach(function(item) {
+  const card = document.createElement('div');
+  card.className = 'summary-card';
+  card.innerHTML =
+    '<div class="summary-card-number">' + item.number + '</div>' +
+    '<div class="summary-card-label">' + item.label + '</div>' +
+    '<div class="summary-card-desc">' + item.desc + '</div>';
+  summaryGrid.appendChild(card);
+});
+
+// ── Navbar scroll effect ──
+let lastScroll = 0;
+window.addEventListener('scroll', function() {
+  const navbar = document.getElementById('navbar');
+  const scrollY = window.pageYOffset;
+  if (scrollY > 100) {
+    navbar.style.background = 'rgba(10, 10, 10, 0.98)';
+  } else {
+    navbar.style.background = 'rgba(26, 26, 26, 0.95)';
+  }
+  lastScroll = scrollY;
+}, { passive: true });
+</script>
+</body>
+</html>
