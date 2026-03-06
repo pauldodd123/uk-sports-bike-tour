@@ -2,7 +2,7 @@
 """
 UK Sports Club Bike Tour - Route Optimizer v3
 Uses OSRM road distances + region-constrained TSP.
-Start: Swansea (Ospreys). End: Aberdeen.
+Start: Llanelli (Scarlets). End: Aberdeen.
 """
 
 import json
@@ -22,7 +22,7 @@ CYCLING_FACTOR = 1.10  # driving → cycling correction
 OSRM_BASE = "https://router.project-osrm.org"
 OSRM_PROFILE = "driving"
 CACHE_FILE = "distance_matrix_cache.npz"
-START_VENUE = "Ospreys"  # Swansea
+START_VENUE = "Scarlets"  # Llanelli
 
 # ─── Data Structures ────────────────────────────────────────────────────────
 
@@ -152,7 +152,7 @@ REGION_ORDER = [
 # Preferred entry/exit for each region (venue names)
 # Entry = where we come in from previous region, Exit = where we leave to next
 REGION_HINTS = {
-    "South_Wales": {"entry": "Ospreys", "exit": "Newport County"},
+    "South_Wales": {"entry": "Scarlets", "exit": "Newport County"},
     "Bristol_Bath_Gloucester": {"entry": "Gloucester Rugby", "exit": "Somerset"},
     "Devon_Somerset": {"entry": "Somerset", "exit": "Somerset"},
     "South_Coast": {"entry": "Bournemouth", "exit": "Hampshire"},
@@ -630,6 +630,17 @@ def main():
     # 4. Build route
     print("\n4. Building optimized route...")
     ordered = build_route(venues, locations, loc_to_venues, dist)
+
+    # Post-processing: swap Manchester Basketball before Oldham Athletic
+    swap_pairs = [("Oldham Athletic", "Manchester Basketball (Giants)")]
+    for name_first, name_second in swap_pairs:
+        idx_a = next((i for i, v in enumerate(ordered) if v.name == name_first), None)
+        idx_b = next((i for i, v in enumerate(ordered) if v.name == name_second), None)
+        if idx_a is not None and idx_b is not None and idx_b < idx_a:
+            # name_second currently comes before name_first; swap so name_first comes first
+            ordered[idx_a], ordered[idx_b] = ordered[idx_b], ordered[idx_a]
+            print(f"   Swapped: {name_first} (now pos {idx_b}) ↔ {name_second} (now pos {idx_a})")
+
     print(f"   Total venues in route: {len(ordered)}")
     unique_names = set(v.name for v in ordered)
     print(f"   Unique venue names: {len(unique_names)}")
