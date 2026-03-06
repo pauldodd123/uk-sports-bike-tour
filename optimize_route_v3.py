@@ -78,8 +78,10 @@ def assign_tour_region(v: Venue) -> str:
             return "North_West"
         return "West_Midlands"
 
-    # East Midlands
+    # East Midlands — Northampton clubs go to Thames_Valley (between Peterborough and MK)
     if v.region == "East Midlands":
+        if "Northampton" in name:
+            return "Thames_Valley"
         return "East_Midlands"
 
     # London
@@ -158,9 +160,9 @@ REGION_HINTS = {
     "London": {"entry": "Charlton Athletic", "exit": "Saracens"},
     "Home_Counties": {"entry": "Watford", "exit": "Stevenage"},
     "East_Anglia": {"entry": "Cambridge United", "exit": "Peterborough United"},
-    "Thames_Valley": {"entry": "Milton Keynes Dons", "exit": "Swindon Town"},
+    "Thames_Valley": {"entry": "Northampton Town", "exit": "Swindon Town"},
     "West_Midlands": {"entry": "Cheltenham Town", "exit": "Coventry City"},
-    "East_Midlands": {"entry": "Northampton Town", "exit": "Chesterfield"},
+    "East_Midlands": {"entry": "Coventry City", "exit": "Chesterfield"},
     "South_Yorkshire_Humber": {"entry": "Sheffield United", "exit": "Hull Kingston Rovers"},
     "West_Yorkshire": {"entry": "Castleford Tigers", "exit": "Huddersfield Town"},
     "North_West": {"entry": "Manchester City", "exit": "Barrow"},
